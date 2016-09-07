@@ -40,6 +40,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //V1.01
 //- Defines updated to generic I2C
+//
+//V1.02
+//- Updated for XC32 compiler I2C functionality
 
 //##### NOTES #####
 //This driver uses the DS1337 in 24 hour mode and implements the time of day alarms
@@ -157,6 +160,8 @@ BYTE rtc_year;
 //##################
 //##### PIC 32 #####
 //##################
+/*
+//C32 compiler:
 #define	RTC_I2C_START_I2C					StartI2C1					//Generate bus start condition
 #define	RTC_I2C_START_IN_PROGRESS_BIT		I2C1CONbits.SEN				//Bit indicating start is still in progress
 #define	RTC_I2C_RESTART_I2C					RestartI2C1					//Generate bus restart condition
@@ -172,6 +177,24 @@ BYTE rtc_year;
 #define RTC_I2C_NOT_ACK						NotAckI2C1					//Generate bus Not ACK condition
 #define	RTC_I2C_ACK_IN_PROGRESS_BIT			I2C1CONbits.ACKEN			//Bit indicating ACK is still in progress
 #define	RTC_I2C_IDLE_I2C					IdleI2C1					//Test if I2C1 module is idle (wait until it is ready for next operation)
+*/
+//XC32 Compiler:
+#define	RTC_I2C_START_I2C					while(!I2CBusIsIdle(I2C4));I2CStart(I2C4)			//Generate bus start condition
+#define	RTC_I2C_START_IN_PROGRESS_BIT		I2C4CONbits.SEN										//Bit indicating start is still in progress
+#define	RTC_I2C_RESTART_I2C					I2CRepeatStart(I2C4)								//Generate bus restart condition
+#define	RTC_I2C_RESTART_IN_PROGRESS_BIT		I2C4CONbits.RSEN									//Bit indicating re-start is still in progress
+#define	RTC_I2C_STOP_I2C					I2CStop(I2C4)										//Generate bus stop condition
+#define	RTC_I2C_STOP_IN_PROGRESS_BIT		I2C4CONbits.PEN										//Bit indicating Stop is still in progress
+#define	RTC_I2C_WRITE_BYTE(a)				while(!I2CTransmitterIsReady(I2C4));I2CSendByte(I2C4, a)	//Write byte to I2C device
+#define	RTC_I2C_TX_IN_PROGRESS_BIT			(!I2CTransmissionHasCompleted(I2C4))				//Bit indicating transmit byte is still in progress
+#define	RTC_I2C_ACK_NOT_RECEIVED_BIT		(!I2CByteWasAcknowledged(I2C4))						//Bit that is high when ACK was not received
+//#define	RTC_I2C_READ_BYTE_START																//Read byte from I2C device function (optional)
+#define	RTC_I2C_READ_BYTE(a)				I2CReceiverEnable(I2C4, TRUE); while(!I2CReceivedDataIsAvailable(I2C4)); a=I2CGetByte(I2C4)	//Read byte from I2C device function / result byte of TCN75_I2C_READ_FUNCTION_START. (I2CReceiverEnable will only cause 1 byte to be read, you have to use it again for multiple bytes)
+#define RTC_I2C_ACK							I2CAcknowledgeByte(I2C4, TRUE)						//Generate bus ACK condition
+#define RTC_I2C_NOT_ACK						I2CAcknowledgeByte(I2C4, FALSE)						//Generate bus Not ACK condition
+#define	RTC_I2C_ACK_IN_PROGRESS_BIT			(!I2CAcknowledgeHasCompleted(I2C4))					//Bit indicating ACK is still in progress
+#define	RTC_I2C_IDLE_I2C					//while(!I2CBusIsIdle(I2C4))						//Test if I2C module is idle (FOR XC32 THIS CAN'T BE USED AFTER START CONDITION SO WE DON'T USE IT)
+
 
 #endif //#ifdef RTC_USING_PIC32
 
