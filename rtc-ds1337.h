@@ -43,6 +43,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //V1.02
 //- Updated for XC32 compiler I2C functionality
+//
+//V1.03
+//- rtc_has_time_been_kept_since_last_set fucntion added
 
 //##### NOTES #####
 //This driver uses the DS1337 in 24 hour mode and implements the time of day alarms
@@ -55,7 +58,7 @@ BYTE rtc_seconds;
 BYTE rtc_minutes;
 BYTE rtc_hours;
 BYTE rtc_day;
-BYTE rtc_date;
+BYTE rtc_day_of_month;
 BYTE rtc_month;
 BYTE rtc_year;
 
@@ -64,16 +67,16 @@ BYTE rtc_year;
 	rtc_minutes = 2;		//0 - 59
 	rtc_seconds = 1;		//0 - 59
 	rtc_day = 4;			//1 - 7
-	rtc_date = 5;			//1 - 31
+	rtc_day_of_month = 5;	//1 - 31
 	rtc_month = 6;			//1 - 12
 	rtc_year = 7;			//0 - 99
-	if (!rtc_set_time(0x00, rtc_hours, rtc_minutes, rtc_seconds, rtc_day, rtc_date, rtc_month, rtc_year))		//AlarmControl, H:M:S DOW D:M:Y
+	if (!rtc_set_time(0x00, rtc_hours, rtc_minutes, rtc_seconds, rtc_day, rtc_day_of_month, rtc_month, rtc_year))		//AlarmControl, H:M:S DOW D:M:Y
 	{
 		//SET TIME FAILED
 	}
 
 	//----- GET THE TIME -----
-	if (!rtc_get_time(&rtc_hours, &rtc_minutes, &rtc_seconds, &rtc_day, &rtc_date, &rtc_month, &rtc_year))		//H:M:S DOW D:M:Y
+	if (!rtc_get_time(&rtc_hours, &rtc_minutes, &rtc_seconds, &rtc_day, &rtc_day_of_month, &rtc_month, &rtc_year))		//H:M:S DOW D:M:Y
 	{
 		//GET TIME FAILED
 	}
@@ -85,6 +88,32 @@ BYTE rtc_year;
 	//----- CLEAR ALARMS -----
 	//rtc_clear_alarms();
 	
+	//----- AUTO SETTING TIME FROM AOTHER TIME SOURCE -----
+	//Do check when we're not about to roll over as 1 or 2 seconds out is acceptable and expected
+	if ((gps_seconds >= 10) && (gps_seconds <= 50) )
+	{
+		if (
+			(real_time_clock_time_is_valid == 0) ||
+			(rtc_year != gps_year) ||				//Both are 0-99
+			(rtc_month != gps_month) ||				//1 - 12
+			(rtc_date != gps_dayofmonth) ||			//1 - 31
+			(rtc_hours != gps_hours) ||				//0 - 23
+			(rtc_minutes != gps_mins) ||			//0 - 59
+			( (gps_seconds < rtc_seconds - 5) || (gps_seconds > rtc_seconds + 5) )		//0 - 59
+		)
+		{
+			set_rtc_year = gps_year;
+			set_rtc_month = gps_month;
+			set_rtc_date = gps_dayofmonth;
+			set_rtc_day = 1;
+			set_rtc_hours = gps_hours;
+			set_rtc_minutes = gps_mins;
+			set_rtc_seconds = gps_seconds;
+
+			set_rtc = 0xfe;
+		}
+	}
+
 */
 
 
@@ -222,6 +251,7 @@ BYTE rtc_year;
 //unsigned char flash_read(unsigned long address);
 BYTE rtc_set_time (BYTE alarms_enabled, BYTE hours, BYTE minutes, BYTE seconds, BYTE day, BYTE date, BYTE month, BYTE year);
 BYTE rtc_get_time (BYTE *hours, BYTE *minutes, BYTE *seconds, BYTE *day, BYTE *date, BYTE *month, BYTE *year);
+BYTE rtc_has_time_been_kept_since_last_set(void);
 BYTE rtc_set_alarm (BYTE alarm_id, BYTE alarms_enabled, BYTE hours, BYTE minutes, BYTE seconds, BYTE date_day);
 BYTE rtc_clear_alarms (void);
 
@@ -232,6 +262,7 @@ BYTE rtc_clear_alarms (void);
 //extern unsigned char flash_read(unsigned long address);
 extern BYTE rtc_set_time (BYTE alarms_enabled, BYTE hours, BYTE minutes, BYTE seconds, BYTE day, BYTE date, BYTE month, BYTE year);
 extern BYTE rtc_get_time (BYTE *hours, BYTE *minutes, BYTE *seconds, BYTE *day, BYTE *date, BYTE *month, BYTE *year);
+extern BYTE rtc_has_time_been_kept_since_last_set(void);
 extern BYTE rtc_set_alarm (BYTE alarm_id, BYTE alarms_enabled, BYTE hours, BYTE minutes, BYTE seconds, BYTE date_day);
 extern BYTE rtc_clear_alarms (void);
 
