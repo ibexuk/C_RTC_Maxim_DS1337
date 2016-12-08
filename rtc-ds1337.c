@@ -208,7 +208,7 @@ BYTE rtc_set_time (BYTE alarms_enabled, BYTE hours, BYTE minutes, BYTE seconds, 
 
 	//Write status
 	RTC_I2C_IDLE_I2C;
-	RTC_I2C_WRITE_BYTE(alarms_enabled & 0x00);		//Clear the OSF bit so we can detect if the oscillator has stopped in the future
+	RTC_I2C_WRITE_BYTE(0x00);		//Clear the OSF bit so we can detect if the oscillator has stopped in the future
 	while (RTC_I2C_TX_IN_PROGRESS_BIT)
 		;
 	if (RTC_I2C_ACK_NOT_RECEIVED_BIT)
@@ -252,7 +252,7 @@ rtc_set_time_fail:
 //	day_of_month	1 - 31
 //	month			1 - 12
 //	year			0 - 99
-BYTE rtc_get_time (BYTE *hours, BYTE *minutes, BYTE *seconds, BYTE *day, BYTE *rtc_day_of_month, BYTE *month, BYTE *year)
+BYTE rtc_get_time (BYTE *hours, BYTE *minutes, BYTE *seconds, BYTE *day, BYTE *day_of_month, BYTE *month, BYTE *year)
 {
 	BYTE temp;
 
@@ -336,13 +336,13 @@ BYTE rtc_get_time (BYTE *hours, BYTE *minutes, BYTE *seconds, BYTE *day, BYTE *r
 	while (RTC_I2C_ACK_IN_PROGRESS_BIT)
 		;
 
-	//Read rtc_day_of_month
+	//Read day_of_month
 	RTC_I2C_IDLE_I2C;
 	#ifdef RTC_I2C_READ_BYTE_START
 		RTC_I2C_READ_BYTE_START
 	#endif
 	RTC_I2C_READ_BYTE(temp);
-	*rtc_day_of_month = (temp & 0x0f) + (((temp & 0x30) >> 4) * 10);
+	*day_of_month = (temp & 0x0f) + (((temp & 0x30) >> 4) * 10);
 	RTC_I2C_ACK;					//Send Ack
 	while (RTC_I2C_ACK_IN_PROGRESS_BIT)
 		;
@@ -390,7 +390,7 @@ rtc_get_time_fail:
 	*minutes = 0;
 	*hours = 0;
 	*day = 0;
-	*rtc_day_of_month = 1;
+	*day_of_month = 1;
 	*month = 1;
 	*year = 0;
 
@@ -412,7 +412,7 @@ rtc_get_time_fail:
 //******************************************************************
 //******************************************************************
 //Returns:
-//	1 if time is OK, 0 if the osciallator has stopepd at any point sicne the tiem was last set
+//	1 if time is OK, 0 if the osciallator has stoppd at any point since the time was last set
 BYTE rtc_has_time_been_kept_since_last_set (void)
 {
 	BYTE status;
@@ -433,7 +433,7 @@ BYTE rtc_has_time_been_kept_since_last_set (void)
 
 	//Send the register address
 	RTC_I2C_IDLE_I2C;
-	RTC_I2C_WRITE_BYTE(0x0f);				//oxof = Status register
+	RTC_I2C_WRITE_BYTE(0x0f);				//0x0f = Status register
 	while (RTC_I2C_TX_IN_PROGRESS_BIT)
 		;
 	if (RTC_I2C_ACK_NOT_RECEIVED_BIT)
@@ -475,7 +475,7 @@ BYTE rtc_has_time_been_kept_since_last_set (void)
 	while (RTC_I2C_STOP_IN_PROGRESS_BIT)
 		;
 	
-	if (status & 0x07)		//1=osciallator has stopped since time was last set
+	if (status & 0x80)		//1=osciallator has stopped since time was last set
 		return (0);
 	else
 		return (1);
