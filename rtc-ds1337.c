@@ -414,7 +414,7 @@ rtc_get_time_fail:
 //******************************************************************
 //******************************************************************
 //Returns:
-//	1 if time is OK, 0 if the osciallator has stoppd at any point since the time was last set
+//	1 if time is OK, 0 if the oscillator has stopped at any point since the time was last set
 BYTE rtc_has_time_been_kept_since_last_set (void)
 {
 	BYTE status;

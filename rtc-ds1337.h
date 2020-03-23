@@ -58,13 +58,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //##### USING THE DRIVER #####
 //Include this header file in any .c files within your project from which you wish to use it's functions.
 /*
-BYTE rtc_seconds;
-BYTE rtc_minutes;
-BYTE rtc_hours;
-BYTE rtc_day;
-BYTE rtc_day_of_month;
-BYTE rtc_month;
-BYTE rtc_year;
+
+	//----- READ THE RTC -----
+	rtc_time_is_valid = 0;
+	if (rtc_has_time_been_kept_since_last_set())			//0=The RTC oscillator has stopped since the time was last set
+	{
+		if (rtc_get_time(&rtc_hours, &rtc_minutes, &rtc_seconds, &rtc_day, &rtc_day_of_month, &rtc_month, &rtc_year))		//H:M:S DOW D:M:Y
+		{
+			rtc_time_is_valid = 1;
+		}
+	}
+	
 
 	//----- SET THE TIME -----
 	rtc_hours = 3;			//0 - 23
@@ -74,17 +78,11 @@ BYTE rtc_year;
 	rtc_day_of_month = 5;	//1 - 31
 	rtc_month = 6;			//1 - 12
 	rtc_year = 7;			//0 - 99
-	if (!rtc_set_time(0x00, rtc_hours, rtc_minutes, rtc_seconds, rtc_day, rtc_day_of_month, rtc_month, rtc_year))		//AlarmControl, H:M:S DOW D:M:Y
+	if (rtc_set_time(0x00, rtc_hours, rtc_minutes, rtc_seconds, rtc_day, rtc_day_of_month, rtc_month, rtc_year))		//AlarmControl, H:M:S DOW D:M:Y
 	{
-		//SET TIME FAILED
+		 rtc_time_is_valid = 1;
 	}
-
-	//----- GET THE TIME -----
-	if (!rtc_get_time(&rtc_hours, &rtc_minutes, &rtc_seconds, &rtc_day, &rtc_day_of_month, &rtc_month, &rtc_year))		//H:M:S DOW D:M:Y
-	{
-		//GET TIME FAILED
-	}
-	
+ 
 	//----- SET RTC ALARM -----
 	rtc_set_alarm(1, 0x01, 13, 49, 0, 0xff); 	//AlarmId, AlarmCtrl, H:M:S DOW/D
 												//Note: After an alarm is activated the INT pin will remain driven low until rtc_clear_alarms() is called
@@ -92,7 +90,7 @@ BYTE rtc_year;
 	//----- CLEAR ALARMS -----
 	//rtc_clear_alarms();
 	
-	//----- AUTO SETTING TIME FROM AOTHER TIME SOURCE -----
+	//----- AUTO SETTING TIME FROM ANOTHER TIME SOURCE -----
 	//Do check when we're not about to roll over as 1 or 2 seconds out is acceptable and expected
 	if ((gps_seconds >= 10) && (gps_seconds <= 50) )
 	{
@@ -292,14 +290,28 @@ extern BYTE rtc_clear_alarms (void);
 //----- INTERNAL & EXTERNAL MEMORY DEFINITIONS -----
 //--------------------------------------------------
 //(Also defined below as extern)
-
+BYTE rtc_time_is_valid = 0;
+BYTE rtc_seconds = 0;
+BYTE rtc_minutes = 0;
+BYTE rtc_hours = 0;
+BYTE rtc_day = 0;
+BYTE rtc_day_of_month = 0;
+BYTE rtc_month = 0;
+BYTE rtc_year = 0;
 
 
 #else
 //---------------------------------------
 //----- EXTERNAL MEMORY DEFINITIONS -----
 //---------------------------------------
-
+extern BYTE rtc_time_is_valid;
+extern BYTE rtc_seconds;
+extern BYTE rtc_minutes;
+extern BYTE rtc_hours;
+extern BYTE rtc_day;
+extern BYTE rtc_day_of_month;
+extern BYTE rtc_month;
+extern BYTE rtc_year;
 
 
 #endif
