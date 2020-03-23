@@ -45,7 +45,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //- Updated for XC32 compiler I2C functionality
 //
 //V1.03
-//- rtc_has_time_been_kept_since_last_set fucntion added
+//- rtc_has_time_been_kept_since_last_set function added
+//
+//V1.04
+//- RTC_I2C_READ_BYTE define corrected
+
 
 //##### NOTES #####
 //This driver uses the DS1337 in 24 hour mode and implements the time of day alarms
@@ -131,8 +135,8 @@ BYTE rtc_year;
 
 //------ SELECT COMPILER ------
 //(Enable one of these only)
-#define	RTC_USING_PIC18
-//#define	RTC_USING_PIC24
+//#define	RTC_USING_PIC18
+#define	RTC_USING_PIC24
 //#define	RTC_USING_PIC32
 
 
@@ -153,7 +157,7 @@ BYTE rtc_year;
 #define	RTC_I2C_TX_IN_PROGRESS_BIT			SSP1STATbits.R_W			//Bit indicating transmit byte is still in progress
 #define	RTC_I2C_ACK_NOT_RECEIVED_BIT		SSP1CON2bits.ACKSTAT		//Bit that is high when ACK was not received
 //#define	RTC_I2C_READ_BYTE_START										//Read byte from I2C device function (optional)
-#define	RTC_I2C_READ_BYTE					ReadI2C1()					//Read byte from I2C device function / result byte of RTC_I2C_READ_FUNCTION_START
+#define	RTC_I2C_READ_BYTE(a)				a = ReadI2C1()				//Read byte from I2C device function / result byte of RTC_I2C_READ_FUNCTION_START
 #define RTC_I2C_ACK							AckI2C1						//Generate bus ACK condition
 #define RTC_I2C_NOT_ACK						NotAckI2C1					//Generate bus Not ACK condition
 #define	RTC_I2C_ACK_IN_PROGRESS_BIT			SSP1CON2bits.ACKEN			//Bit indicating ACK is still in progress
@@ -176,11 +180,12 @@ BYTE rtc_year;
 #define	RTC_I2C_TX_IN_PROGRESS_BIT			I2C2STATbits.TRSTAT										//Bit indicating transmit byte is still in progress
 #define	RTC_I2C_ACK_NOT_RECEIVED_BIT		I2C2STATbits.ACKSTAT									//Bit that is high when ACK was not received
 #define	RTC_I2C_READ_BYTE_START				I2C2CONbits.RCEN = 1; while(I2C2STATbits.RBF == 0) ;	//Read byte from I2C device function (optional)
-#define	RTC_I2C_READ_BYTE					I2C2RCV													//Read byte from I2C device function / result byte of RTC_I2C_READ_FUNCTION_START
+#define	RTC_I2C_READ_BYTE(a)				a = I2C2RCV													//Read byte from I2C device function / result byte of RTC_I2C_READ_FUNCTION_START
 #define RTC_I2C_ACK							I2C2CONbits.ACKDT = 0; I2C2CONbits.ACKEN = 1			//Generate bus ACK condition
 #define RTC_I2C_NOT_ACK						I2C2CONbits.ACKDT = 1; I2C2CONbits.ACKEN = 1			//Generate bus Not ACK condition
 #define	RTC_I2C_ACK_IN_PROGRESS_BIT			I2C2CONbits.ACKEN										//Bit indicating ACK is still in progress
 #define	RTC_I2C_IDLE_I2C					while ((I2C2CON & 0x001F) | (I2C2STATbits.R_W))			//Test if I2C1 module is idle (wait until it is ready for next operation)
+
 
 #endif //#ifdef RTC_USING_PIC24
 
@@ -201,7 +206,7 @@ BYTE rtc_year;
 #define	RTC_I2C_TX_IN_PROGRESS_BIT			I2C1STATbits.TRSTAT			//Bit indicating transmit byte is still in progress
 #define	RTC_I2C_ACK_NOT_RECEIVED_BIT		I2C1STATbits.ACKSTAT		//Bit that is high when ACK was not received
 //#define	RTC_I2C_READ_BYTE_START										//Read byte from I2C device function (optional)
-#define	RTC_I2C_READ_BYTE					MasterReadI2C1()			//Read byte from I2C device function / result byte of RTC_I2C_READ_FUNCTION_START
+#define	RTC_I2C_READ_BYTE(a)				a = MasterReadI2C1()		//Read byte from I2C device function / result byte of RTC_I2C_READ_FUNCTION_START
 #define RTC_I2C_ACK							AckI2C1						//Generate bus ACK condition
 #define RTC_I2C_NOT_ACK						NotAckI2C1					//Generate bus Not ACK condition
 #define	RTC_I2C_ACK_IN_PROGRESS_BIT			I2C1CONbits.ACKEN			//Bit indicating ACK is still in progress
